@@ -24,7 +24,7 @@ namespace cfg {
 //  Shape::Table              -> TANK_TABLE (height -> liters of ONE tank, e.g. from
 //                               the manufacturer's "Peiltabelle"), most accurate
 //                               for rounded plastic tanks.
-constexpr tank::Shape TANK_SHAPE = tank::Shape::Rectangular;
+constexpr tank::Shape TANK_SHAPE = tank::Shape::Table;
 
 constexpr float TANK_HEIGHT_CM = 145.0f;
 constexpr float TANK_LENGTH_CM = 212.0f;
@@ -38,16 +38,32 @@ constexpr unsigned TANK_COUNT = 2;
 // Distance from the sensor face down to the highest possible oil level (inner tank
 // top). The JSN-SR04T cannot measure closer than ~25 cm, so if the tank can be filled
 // to the top, mount the sensor on a riser so that this offset is >= 25 cm.
-constexpr float SENSOR_OFFSET_CM = 1.0f;
+constexpr float SENSOR_OFFSET_CM = 6.0f;
 
 // Calibration table, only used with Shape::Table. Ascending height, liters per tank.
 constexpr tank::TablePoint TANK_TABLE[] = {
+    // Nau-Nylon-BAF 2000 L
     {0.0f, 0.0f},
-    {10.0f, 95.0f},
-    {50.0f, 640.0f},
-    {100.0f, 1310.0f},
-    {140.0f, 1840.0f},
-    {150.0f, 1950.0f},
+    {9.0f, 100.0f},
+    {15.8f, 200.0f},
+    {22.5f, 300.0f},
+    {29.2f, 400.0f},
+    {35.9f, 500.0f},
+    {42.6f, 600.0f},
+    {49.3f, 700.0f},
+    {54.0f, 800.0f},
+    {62.7f, 900.0f},
+    {69.4f, 1000.0f},
+    {76.1f, 1100.0f},
+    {82.8f, 1200.0f},
+    {89.5f, 1300.0f},
+    {96.2f, 1400.0f},
+    {102.9f, 1500.0f},
+    {109.6f, 1600.0f},
+    {116.0f, 1700.0f},
+    {122.6f, 1800.0f},
+    {130.0f, 1900.0f},
+    {139.0f, 2000.0f},
 };
 
 constexpr tank::Config TANK = {
