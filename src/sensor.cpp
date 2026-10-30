@@ -20,7 +20,9 @@ unsigned long echoTimeoutUs() {
     return static_cast<unsigned long>(2.0f * cfg::SENSOR_MAX_DISTANCE_CM / speedOfSoundCmPerUs() * 1.2f);
 }
 
-float pingCm() {
+}  // namespace
+
+unsigned long pingEchoUs() {
     digitalWrite(cfg::PIN_SENSOR_TRIG, LOW);
     delayMicroseconds(5);
     // The JSN-SR04T needs a longer trigger pulse than the HC-SR04 (>10 us).
@@ -28,7 +30,13 @@ float pingCm() {
     delayMicroseconds(20);
     digitalWrite(cfg::PIN_SENSOR_TRIG, LOW);
 
-    const unsigned long us = pulseIn(cfg::PIN_SENSOR_ECHO, HIGH, echoTimeoutUs());
+    return pulseIn(cfg::PIN_SENSOR_ECHO, HIGH, echoTimeoutUs());
+}
+
+namespace {
+
+float pingCm() {
+    const unsigned long us = pingEchoUs();
     if (us == 0) return NAN;
     return static_cast<float>(us) * speedOfSoundCmPerUs() / 2.0f;
 }
@@ -45,13 +53,17 @@ void powerOff() {
     pinMode(cfg::PIN_SENSOR_POWER, INPUT);
 }
 
-Reading measure() {
+void powerOn() {
     pinMode(cfg::PIN_SENSOR_ECHO, INPUT);
     pinMode(cfg::PIN_SENSOR_TRIG, OUTPUT);
     digitalWrite(cfg::PIN_SENSOR_TRIG, LOW);
     pinMode(cfg::PIN_SENSOR_POWER, OUTPUT);
     digitalWrite(cfg::PIN_SENSOR_POWER, LOW);  // P-MOSFET on
     delay(cfg::SENSOR_WARMUP_MS);
+}
+
+Reading measure() {
+    powerOn();
 
     float samples[cfg::SENSOR_SAMPLES];
     int n = 0;

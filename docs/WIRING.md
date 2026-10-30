@@ -156,6 +156,9 @@ wakeup further.
 
 ## Calibration
 
+Quickest: the Android app with the USB streaming firmware, see the README. Or with
+the serial log:
+
 1. Build/flash the debug variant (`pio run -e xiao_esp32c6_debug -t upload`) and open
    the serial monitor (`pio device monitor`). It measures every 60 s and logs every ping.
 2. Compare the reported *height* with a dipstick reading or the tank's level gauge.

@@ -29,6 +29,24 @@ distance to the oil surface, converts it to liters and publishes the values via 
    most of its time in deep sleep without USB; to flash again hold **BOOT**, tap
    **RESET**, release BOOT and upload.
 
+## Calibrating with an Android phone
+
+For calibrating at the tank without a laptop there is a firmware variant that streams
+every ping over USB and a small Android app (`android/`) that shows it live.
+
+1. Flash the streaming firmware: `pio run -e xiao_esp32c6_calibration -t upload`
+   (hold **BOOT**, tap **RESET** if the board is asleep). It never sleeps and has no WiFi.
+2. Build and install the app: `cd android && ./gradlew installDebug` (or open `android/`
+   in Android Studio). Needs JDK 17 and the Android SDK.
+3. Plug the XIAO into the phone with a USB-C OTG cable (the phone powers the board and
+   sensor) and allow USB access. The app also starts when the board is plugged in.
+
+The app shows the median of the last 9 pings (like the real firmware), a strip chart,
+statistics and the raw echo time. Set the air temperature, enter the tape-measured
+distance and it suggests the `SENSOR_OFFSET_CM` or `AIR_TEMPERATURE_C` correction.
+The firmware sends only raw echo times (`P,<seq>,<echo_us>`), so all of this is tuned
+live in the app without reflashing. Protocol: [calibration/main.cpp](calibration/main.cpp).
+
 ## MQTT topics
 
 All values are published retained under `oilmeter/<DEVICE_ID>/`:
