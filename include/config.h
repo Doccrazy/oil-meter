@@ -26,19 +26,19 @@ namespace cfg {
 //                               for rounded plastic tanks.
 constexpr tank::Shape TANK_SHAPE = tank::Shape::Rectangular;
 
-constexpr float TANK_HEIGHT_CM = 150.0f;
-constexpr float TANK_LENGTH_CM = 170.0f;
-constexpr float TANK_WIDTH_CM = 78.0f;
+constexpr float TANK_HEIGHT_CM = 145.0f;
+constexpr float TANK_LENGTH_CM = 212.0f;
+constexpr float TANK_WIDTH_CM = 65.0f;
 constexpr float TANK_DIAMETER_CM = 100.0f;
 
 // Number of identical tanks connected at the bottom (battery tank system). The sensor
 // sits in one of them; the measured volume is multiplied by this count.
-constexpr unsigned TANK_COUNT = 1;
+constexpr unsigned TANK_COUNT = 2;
 
 // Distance from the sensor face down to the highest possible oil level (inner tank
 // top). The JSN-SR04T cannot measure closer than ~25 cm, so if the tank can be filled
 // to the top, mount the sensor on a riser so that this offset is >= 25 cm.
-constexpr float SENSOR_OFFSET_CM = 5.0f;
+constexpr float SENSOR_OFFSET_CM = 1.0f;
 
 // Calibration table, only used with Shape::Table. Ascending height, liters per tank.
 constexpr tank::TablePoint TANK_TABLE[] = {
