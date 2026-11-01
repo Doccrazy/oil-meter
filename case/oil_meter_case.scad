@@ -2,19 +2,21 @@
 //
 // Layout (top view, lid removed):
 //
-//              BOOT rod          probe plug (JST XH, from outside)
-//   +-----------||------------------------v-----+
-//   |                          <-Dupont-|JSN|   |   JSN-SR04T stands upright
-//   USB-C [ FireBeetle 2 C5 ]           |   |   |   against the +Y wall,
-//   |                                           |   41 mm edge vertical
-//   +-----------||-------------------------------+
+//              BOOT rod
+//   +-----------||--------------------------------+
+//   |                              <-Dupont-+---+ |
+//   USB-C [ FireBeetle 2 C5 ]               |JSN| |  probe plug from the top,
+//   |                                       +---+ |  through the lid
+//   +-----------||--------------------------------+
 //              RST rod
 //
 //   The battery (36 x 70 x 10) sits in a frame on the underside of the lid, above the
 //   FireBeetle. Its JST-PH lead goes down to the BAT connector of the FireBeetle.
-//   The JSN board's JST socket (on its back) sits in a cutout of the side wall, so the
-//   probe cable plugs in from outside without a bend. Its right-angle header points
-//   towards the FireBeetle; the Dupont plugs run above the FireBeetle, below the battery.
+//
+//   The JSN-SR04T board is mounted upside down on tall standoffs, components (10 mm)
+//   towards the floor, so the probe socket on its back points up into an opening in the
+//   lid: the probe cable plugs in from outside without a bend. Its right-angle header
+//   points towards the FireBeetle.
 //
 // Parts (set `part`, or use the OpenSCAD customizer):
 //   base    - the box, print open side up
@@ -63,12 +65,13 @@ sr_w        = 28.5;
 sr_pcb      = 1.6;
 sr_holes    = [[2.5, 2.5], [38.5, 2.5], [2.5, 26.0], [38.5, 26.0]]; // [u, v]
 sr_pilot_d  = 2.2;    // M2.5 self-tapping into the standoffs
-sr_comp_clear = 10;   // parts on the component (header) side
+sr_comp_clear = 11;   // parts on the component (header) side
 sr_jst      = [20.5, 13.4];  // [u, v] centre of the probe socket on the back
-sr_jst_h    = 7.0;    // JST XH socket height above the pcb back
-sr_jst_hole = [7.0, 10.8];   // wall cutout [along v, along u]
-sr_z0       = 1.5;    // lower board edge above the floor
-dupont_clear= 20;     // header pins + Dupont plugs, beyond the header edge
+sr_jst_h    = 8.0;    // JST socket height above the pcb back (unplugged)
+sr_jst_hole = [8.5, 10];   // cutout for socket/plug [along v, along u]
+sr_plug_reach = 10;   // the plug can reach this far into the case
+dupont_clear= 20;     // header pins + Dupont plugs + wire bend, beyond the header edge
+dupont_len  = 15;     // rigid part of the Dupont plugs beyond the header edge
 
 /* [Openings] */
 usb_hole      = [12.5, 7.5];   // USB-C plug overmould
@@ -86,6 +89,7 @@ boss_d     = 8;
 boss_hole_d= 2.6;   // 2.6 for M3 self-tapping, 4.0 for M3 heat-set inserts
 lid_hole_d = 3.4;
 lid_head_d = 6.2;   // counterbore for the screw head
+tab_mount  = true;  // [true, false]
 tab_w      = 12;
 tab_len    = 10;
 tab_t      = 3;
@@ -103,16 +107,18 @@ fb_y0 = 5;                          // RST side gap (push-rod)
 bat_x0 = clr + lip_t + frame_t + clr;
 bat_x1 = bat_x0 + bat[0] + 2 * clr + frame_t;
 
-// JSN board stands on the +Y wall, past the battery, header edge facing the FireBeetle
-sr_back_gap = sr_jst_h - wall;      // socket face flush with the outside of the wall
-sr_depth = sr_back_gap + sr_pcb + sr_comp_clear;
-sr_x0 = max(bat_x1 + 1, fb_x0 + fb_l + 1);
+// JSN board past the battery (its socket must not be covered), header edge facing the
+// FireBeetle. The Dupont plugs are at the height of the FireBeetle's module: keep clear.
+sr_floor_h = sr_comp_clear + 0.5;   // standoff height under the components
+sr_back_z  = sr_floor_h + sr_pcb;   // pcb back (socket side), facing up
+sr_x0 = max(bat_x1 + 1, fb_x0 + fb_l + dupont_len + 1) - 11; // minus allowed overlap
 
-in_l = sr_x0 + sr_w + 1.5;
-in_w = max(fb_y0 + fb_w + 13.6, sr_depth + 6, bat[1] + 2 * (clr + lip_t + frame_t + clr));
-in_h = max(sr_z0 + sr_l + 1, fb_h + fb_standoff + bat[2] + 3);
+in_l = sr_x0 + sr_w + clr + lip_t + 0.5;   // clear of the lid lip
+in_w = max(fb_y0 + fb_w + 13.6, bat[1] + 2 * (clr + lip_t + frame_t + clr), sr_l + 3);
+in_h = max(fb_h + fb_standoff + bat[2] + 3, sr_back_z + sr_jst_h + 0.5, sr_back_z + bat[2] + 2);
 
 bat_y0 = (in_w - bat[1]) / 2 - clr;
+sr_y0 = (in_w - sr_l) / 2;
 
 fb_top = fb_standoff + fb_pcb;      // pcb top above inner floor
 btn_x  = fb_x0 + fb_btn_from_end;
@@ -128,14 +134,16 @@ boot_guide = in_w - (fb_y0 + fb_w) - collar_t - rod_gap;
 rst_rod_len  = rod_out + wall + rst_guide;
 boot_rod_len = rod_out + wall + boot_guide;
 
-boss_off = 1.5;  // boss centre outside the outer corner
+boss_off = 0;  // boss centre outside the outer corner
 boss_pos = [for (x = [-wall - boss_off, in_l + wall + boss_off],
                  y = [-wall - boss_off, in_w + wall + boss_off]) [x, y]];
 
 echo(str("Outer size: ", out_l + 2 * (boss_off + boss_d / 2), " x ",
          out_w + 2 * tab_len, " (incl. tabs) x ", out_h + lid_t," mm (inner ", in_l, " x ", in_w, " x ", in_h, ")"));
 assert(sr_x0 - dupont_clear > fb_x0 + 30, "Dupont plugs would reach the FireBeetle's tall parts");
-assert(fb_y0 + fb_w < in_w - sr_depth || sr_x0 > fb_x0 + fb_l, "JSN board collides with the FireBeetle");
+assert(in_h + lid_t - (sr_back_z + sr_jst_h) <= sr_plug_reach,
+       "probe plug can't reach the socket through the lid");
+echo(str("Probe socket top ", in_h + lid_t - (sr_back_z + sr_jst_h), " mm below the lid surface"));
 echo(str("Push-rods: RST ", rst_rod_len, " mm, BOOT ", boot_rod_len, " mm"));
 
 // ---------------------------------------------------------------- helpers
@@ -162,9 +170,10 @@ module base() {
         union() {
             translate([0, 0, -floor_t]) linear_extrude(out_h) outline2d();
             // wall-mounting tabs on the long sides
-            for (x = [in_l * 0.2, in_l * 0.8], s = [0, 1])
-                translate([x, s ? in_w + wall : -wall, -floor_t])
-                    mirror([0, s ? 0 : 1, 0]) mount_tab();
+            if (tab_mount)
+                for (x = [in_l * 0.2, in_l * 0.8], s = [0, 1])
+                    translate([x, s ? in_w + wall : -wall, -floor_t])
+                        mirror([0, s ? 0 : 1, 0]) mount_tab();
         }
         // cavity
         cube([in_l, in_w, in_h + 1]);
@@ -180,24 +189,18 @@ module base() {
             cylinder(d = rod_hole_d, h = wall + rst_guide + 2);
         translate([btn_x, in_w - boot_guide - 1, btn_z]) rotate([-90, 0, 0])
             cylinder(d = rod_hole_d, h = wall + boot_guide + 2);
-        // probe socket of the JSN board
-        sr_frame() translate([sr_jst[1], sr_jst[0], -sr_back_gap - wall - 1])
-            linear_extrude(wall + 2) rrect_c([sr_jst_hole[0], sr_jst_hole[1]], 1);
         // labels
         label([btn_x, -wall, btn_z + 4.5], 0, "RST");
         label([btn_x, in_w + wall, btn_z + 4.5], 180, "BOOT");
-        label([sr_x0 + sr_jst[1], in_w + wall, sr_z0 + sr_jst[0] + sr_jst_hole[1] / 2 + 3.5],
-              180, "PROBE");
     }
     // FireBeetle standoffs
     for (p = fb_holes()) translate([p[0], p[1], 0])
         standoff(fb_standoff, fb_hole_d, 4.5);
-    // JSN-SR04T standoffs, sticking out of the +Y wall
-    sr_frame() for (h = sr_holes) translate([h[1], h[0], -sr_back_gap - 0.5])
+    // JSN-SR04T standoffs, up from the floor to the component side
+    sr_frame() for (h = sr_holes) translate([h[1], h[0], sr_pcb])
         difference() {
-            cylinder(d = 5.5, h = sr_back_gap + 0.5);
-            translate([0, 0, 0.5 + sr_back_gap - (sr_back_gap + 1)])
-                cylinder(d = sr_pilot_d, h = sr_back_gap + 2);
+            cylinder(d = 5, h = sr_floor_h + 0.5);
+            translate([0, 0, -1]) cylinder(d = sr_pilot_d, h = min(9, sr_floor_h));
         }
     // push-rod guides
     rod_guide(0, rst_guide);
@@ -231,13 +234,29 @@ module rod_guide(y, len) {
         }
 }
 
-// Board coordinates of the JSN board -> case: v -> +X, u -> +Z, pcb back at z = 0,
-// component side towards -Y.
+// Board coordinates of the JSN board (v from the header edge, u along the 41 mm edge,
+// pcb back = socket side at z = 0, component side at z = +sr_pcb) -> case:
+// v -> +X, u -> -Y, component side down.
 module sr_frame() {
     multmatrix([[1, 0, 0, sr_x0],
-                [0, 0, -1, in_w - sr_back_gap],
-                [0, 1, 0, sr_z0],
+                [0, -1, 0, sr_y0 + sr_l],
+                [0, 0, -1, sr_back_z],
                 [0, 0, 0, 1]]) children();
+}
+
+// Lid placement: maps lid (print) coordinates to case coordinates and back.
+module lid_to_case() {
+    translate([0, in_w, in_h + lid_t]) mirror([0, 1, 0]) mirror([0, 0, 1]) children();
+}
+
+// Cut-outs in the lid, drawn in case coordinates.
+module lid_cuts_case() {
+    jst = [sr_x0 + sr_jst[1], sr_y0 + sr_l - sr_jst[0]];
+    translate([jst[0], jst[1], in_h - 1]) linear_extrude(lid_t + 2)
+        rrect_c([sr_jst_hole[0], sr_jst_hole[1]], 1);
+    translate([jst[0] + sr_jst_hole[0] / 2 + 3.5, jst[1], in_h + lid_t - 0.6])
+        linear_extrude(1) rotate(90) text("PROBE", size = 3.2, halign = "center",
+            valign = "center", font = "Liberation Sans:style=Bold");
 }
 
 function fb_holes() = [for (x = [fb_hole_inset, fb_l - fb_hole_inset],
@@ -273,6 +292,7 @@ module lid() {
             cylinder(d = lid_hole_d, h = lid_t + 2);
             cylinder(d = lid_head_d, h = 1 + 1.2);
         }
+        lid_to_case() lid_cuts_case();
     }
 }
 
@@ -311,15 +331,16 @@ module dummy_jsn() {
             cube([sr_w, sr_l, sr_pcb]);
             for (h = sr_holes) translate([h[1], h[0], -1]) cylinder(d = 3, h = 4);
         }
-        color("#bbb") translate([16, 2, sr_pcb]) cube([10, 10, 10]);         // coil
-        color("#333") translate([4, 2, sr_pcb]) cylinder(d = 6.3, h = 8);    // caps
-        color("#333") translate([4, 9, sr_pcb]) cylinder(d = 6.3, h = 8);
+        // positions from the seller photos
+        color("#bbb") translate([15.4, 0.7, sr_pcb]) cube([8, 7.7, 10]);      // coil
+        color("#333") translate([11.6, 4.9, sr_pcb]) cylinder(d = 4, h = 7);  // caps
+        color("#333") translate([7.1, 3.5, sr_pcb]) cylinder(d = 4, h = 7);
         color("black") translate([0, 16.3, sr_pcb]) cube([2.5, 10, 2.5]);    // header
         color("gold") for (u = [17.5, 20, 22.5, 25])
             translate([-6, u, sr_pcb + 1.2]) cube([6, 0.6, 0.6]);
-        color("#222", 0.6) translate([-dupont_clear, 16.3, sr_pcb]) cube([14, 10, 2.5]);
-        color("white") translate([sr_jst[1] - 3, sr_jst[0] - 5, -sr_jst_h])
-            cube([6, 10, sr_jst_h]);                                         // probe socket
+        color("#222", 0.6) translate([-dupont_len, 16.3, sr_pcb]) cube([dupont_len - 1, 10, 2.5]);
+        color("white") translate([sr_jst[1] - 2.9, sr_jst[0] - 4.95, -sr_jst_h])
+            cube([5.8, 9.9, sr_jst_h]);                                      // probe socket
     }
 }
 
@@ -330,8 +351,7 @@ module dummy_battery() {
 
 module assembly() {
     color("lightgray") base();
-    color("lightgray", 0.35) translate([0, in_w, in_h + lid_t]) mirror([0, 1, 0])
-        mirror([0, 0, 1]) lid();
+    color("lightgray", 0.35) lid_to_case() lid();
     dummy_firebeetle();
     dummy_jsn();
     dummy_battery();
