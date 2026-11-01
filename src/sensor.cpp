@@ -49,7 +49,10 @@ void powerOff() {
     digitalWrite(cfg::PIN_SENSOR_TRIG, LOW);
     pinMode(cfg::PIN_SENSOR_TRIG, INPUT);
     pinMode(cfg::PIN_SENSOR_ECHO, INPUT);
-    // Gate floats -> the 100k pull-up keeps the P-MOSFET off, also during deep sleep.
+    // 3V3_C off. Then release the pin: the board's own default-off bias keeps the
+    // output disabled during deep sleep and boot.
+    pinMode(cfg::PIN_SENSOR_POWER, OUTPUT);
+    digitalWrite(cfg::PIN_SENSOR_POWER, LOW);
     pinMode(cfg::PIN_SENSOR_POWER, INPUT);
 }
 
@@ -58,7 +61,7 @@ void powerOn() {
     pinMode(cfg::PIN_SENSOR_TRIG, OUTPUT);
     digitalWrite(cfg::PIN_SENSOR_TRIG, LOW);
     pinMode(cfg::PIN_SENSOR_POWER, OUTPUT);
-    digitalWrite(cfg::PIN_SENSOR_POWER, LOW);  // P-MOSFET on
+    digitalWrite(cfg::PIN_SENSOR_POWER, HIGH);  // 3V3_C on
     delay(cfg::SENSOR_WARMUP_MS);
 }
 

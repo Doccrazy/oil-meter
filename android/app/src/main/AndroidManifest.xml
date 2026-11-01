@@ -17,7 +17,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Start the app when the XIAO is plugged in (Espressif USB Serial/JTAG) -->
+            <!-- Start the app when the board is plugged in (Espressif USB Serial/JTAG) -->
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>

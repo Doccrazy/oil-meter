@@ -105,12 +105,14 @@ constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 10000;
 constexpr uint32_t MQTT_CONNECT_TIMEOUT_MS = 5000;
 
 // -------------------------------------------------------------------------------------
-//  Battery (single cell Li-ion / LiPo on the XIAO BAT pads)
+//  Battery (single cell Li-ion / LiPo on the FireBeetle BAT connector)
 // -------------------------------------------------------------------------------------
 constexpr bool BATTERY_SENSE_ENABLED = true;
-// Voltage divider BAT+ -> R_TOP -> ADC pin -> R_BOTTOM -> GND
-constexpr float BATTERY_DIVIDER_R_TOP = 1000000.0f;
-constexpr float BATTERY_DIVIDER_R_BOTTOM = 1000000.0f;
+// On-board voltage divider BAT+ -> R_TOP -> IO1 -> R_BOTTOM -> GND. DFRobot does not
+// document the values; FireBeetle 2 boards use a 1:1 divider (battery = 2 x pin).
+// Only the ratio matters. Check it once against a multimeter (BATTERY_CALIBRATION).
+constexpr float BATTERY_DIVIDER_R_TOP = 1.0f;
+constexpr float BATTERY_DIVIDER_R_BOTTOM = 1.0f;
 // Multiply the measured voltage by this to match a multimeter reading.
 constexpr float BATTERY_CALIBRATION = 1.0f;
 constexpr float BATTERY_LOW_V = 3.55f;       // -> longer sleep interval
@@ -136,15 +138,12 @@ constexpr uint8_t STATIC_GATEWAY[4] = {192, 168, 1, 1};
 constexpr uint8_t STATIC_SUBNET[4] = {255, 255, 255, 0};
 constexpr uint8_t STATIC_DNS[4] = {192, 168, 1, 1};
 
-// The XIAO ESP32C6 has a ceramic antenna and a U.FL connector; true selects U.FL.
-constexpr bool USE_EXTERNAL_ANTENNA = false;
-
 // -------------------------------------------------------------------------------------
-//  Pins (XIAO ESP32C6)
+//  Pins (DFRobot FireBeetle 2 ESP32-C5)
 // -------------------------------------------------------------------------------------
-constexpr int PIN_BATTERY_ADC = 0;    // D0 / A0  (GPIO0)
-constexpr int PIN_SENSOR_POWER = 1;   // D1       (GPIO1) -> AO3401A gate, LOW = on
-constexpr int PIN_SENSOR_TRIG = 2;    // D2       (GPIO2)
-constexpr int PIN_SENSOR_ECHO = 21;   // D3       (GPIO21)
+constexpr int PIN_BATTERY_ADC = 1;    // IO1, on-board battery divider
+constexpr int PIN_SENSOR_POWER = 0;   // IO0, enables the switched 3V3_C output, HIGH = on
+constexpr int PIN_SENSOR_TRIG = 8;    // 8/D2
+constexpr int PIN_SENSOR_ECHO = 26;   // 26/D3
 
 }  // namespace cfg

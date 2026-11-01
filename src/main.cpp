@@ -1,5 +1,5 @@
 // Battery powered oil level monitor
-// Seeed XIAO ESP32C6 + JSN-SR04T ultrasonic sensor (switched by an AO3401A P-MOSFET)
+// DFRobot FireBeetle 2 ESP32-C5 + JSN-SR04T ultrasonic sensor (on the switched 3V3_C output)
 //
 // Every wakeup: measure battery -> measure distance -> WiFi -> MQTT -> deep sleep.
 // The radio is only switched on after the measurement, and stays on for ~1-2 s.
@@ -26,7 +26,7 @@ RTC_DATA_ATTR uint32_t rtcWakeups = 0;
 RTC_DATA_ATTR uint32_t rtcFailures = 0;
 RTC_DATA_ATTR uint32_t rtcWakeupsSinceDiscovery = 0;
 
-// Below this the ADC sees no battery (USB powered without cell / divider missing).
+// Below this the ADC sees no battery (USB powered without a cell).
 constexpr float kNoBatteryVolts = 2.5f;
 
 [[noreturn]] void deepSleep(uint32_t seconds) {

@@ -1,6 +1,6 @@
 # Oil level monitor
 
-Battery powered heating oil level monitor based on a Seeed Studio XIAO ESP32C6 and a
+Battery powered heating oil level monitor based on a DFRobot FireBeetle 2 ESP32-C5 and a
 JSN-SR04T waterproof ultrasonic sensor. It wakes up periodically, measures the
 distance to the oil surface, converts it to liters and publishes the values via MQTT
 (with Home Assistant auto discovery), then goes back to deep sleep.
@@ -20,25 +20,25 @@ distance to the oil surface, converts it to liters and publishes the values via 
 4. Build:
 
    ```sh
-   pio run -e xiao_esp32c6_debug   # serial log, 60 s interval – for setup/calibration
-   pio run -e xiao_esp32c6         # release: silent, 6 h interval
-   pio test -e native              # unit tests of the volume math on your PC
+   pio run -e firebeetle2_c5_debug   # serial log, 60 s interval – for setup/calibration
+   pio run -e firebeetle2_c5         # release: silent, 6 h interval
+   pio test -e native                # unit tests of the volume math on your PC
    ```
 
 5. Upload with `pio run -e <env> -t upload`. Once the firmware runs, the board spends
    most of its time in deep sleep without USB; to flash again hold **BOOT**, tap
-   **RESET**, release BOOT and upload.
+   **RST**, release BOOT and upload.
 
 ## Calibrating with an Android phone
 
 For calibrating at the tank without a laptop there is a firmware variant that streams
 every ping over USB and a small Android app (`android/`) that shows it live.
 
-1. Flash the streaming firmware: `pio run -e xiao_esp32c6_calibration -t upload`
-   (hold **BOOT**, tap **RESET** if the board is asleep). It never sleeps and has no WiFi.
+1. Flash the streaming firmware: `pio run -e firebeetle2_c5_calibration -t upload`
+   (hold **BOOT**, tap **RST** if the board is asleep). It never sleeps and has no WiFi.
 2. Build and install the app: `cd android && ./gradlew installDebug` (or open `android/`
    in Android Studio). Needs JDK 17 and the Android SDK.
-3. Plug the XIAO into the phone with a USB-C OTG cable (the phone powers the board and
+3. Plug the FireBeetle into the phone with a USB-C OTG cable (the phone powers the board and
    sensor) and allow USB access. The app also starts when the board is plugged in.
 
 The app shows the median of the last 9 pings (like the real firmware), a strip chart,
@@ -71,7 +71,7 @@ Assistant. Values expire there if the device stops reporting. Other systems
 
 * Deep sleep between measurements (default every 6 h, 24 h when the battery is low,
   no WiFi at all when it is critical).
-* Sensor supply cut completely by the AO3401A MOSFET.
+* Sensor supply cut completely: it runs from the board's switchable 3V3_C output.
 * Measurement happens before WiFi is switched on; CPU runs at 80 MHz.
 * WiFi BSSID and channel are cached in RTC memory to skip scanning; optional static IP.
 * Failed reports retry with exponential backoff (15 min, 30 min, … up to the

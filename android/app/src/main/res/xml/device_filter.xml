@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Espressif USB Serial/JTAG controller of the ESP32-C6 -->
+    <!-- Espressif USB Serial/JTAG controller of the ESP32-C5/C6 (same IDs) -->
     <usb-device vendor-id="12346" product-id="4097" />
 </resources>

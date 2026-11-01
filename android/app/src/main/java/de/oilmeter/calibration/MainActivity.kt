@@ -85,7 +85,7 @@ class MainActivity : Activity(), SerialInputOutputManager.Listener {
         val usb = getSystemService(USB_SERVICE) as UsbManager
         val driver = UsbSerialProber.getDefaultProber().findAllDrivers(usb).firstOrNull()
         if (driver == null) {
-            status.text = "No device. Plug the XIAO (calibration firmware) into the phone's USB port."
+            status.text = "No device. Plug the FireBeetle (calibration firmware) into the phone's USB port."
             return
         }
         if (!usb.hasPermission(driver.device)) {

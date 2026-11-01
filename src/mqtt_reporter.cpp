@@ -73,7 +73,7 @@ bool publishDiscovery(PubSubClient& client) {
         if (e.precision >= 0) append(",\"sug_dsp_prc\":%d", e.precision);
         if (e.diagnostic) append(",\"ent_cat\":\"diagnostic\"");
         append(",\"dev\":{\"ids\":[\"%s\"],\"name\":\"%s\",\"mf\":\"DIY\","
-               "\"mdl\":\"XIAO ESP32C6 + JSN-SR04T\"}}",
+               "\"mdl\":\"FireBeetle 2 ESP32-C5 + JSN-SR04T\"}}",
                cfg::DEVICE_ID, cfg::DEVICE_NAME);
 
         if (n <= 0 || static_cast<size_t>(n) >= sizeof(payload)) {

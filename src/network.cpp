@@ -35,8 +35,6 @@ bool waitConnected(uint32_t timeoutMs) {
 bool connectWifi() {
     const uint32_t start = millis();
 
-    if (cfg::USE_EXTERNAL_ANTENNA) digitalWrite(WIFI_ANT_CONFIG, HIGH);
-
     WiFi.persistent(false);  // don't wear flash with credentials on every wakeup
     WiFi.setHostname(cfg::DEVICE_ID);
     WiFi.mode(WIFI_STA);
