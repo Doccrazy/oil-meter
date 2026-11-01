@@ -7,6 +7,7 @@ distance to the oil surface, converts it to liters and publishes the values via 
 
 * Wiring, schematic, mounting and calibration: [docs/WIRING.md](docs/WIRING.md)
 * All tank dimensions and tuning parameters: [include/config.h](include/config.h)
+* 3D printable case (OpenSCAD): [case/oil_meter_case.scad](case/oil_meter_case.scad)
 * WiFi / MQTT credentials: `include/secrets.h` (template: `include/secrets.example.h`)
 
 ## Setup
