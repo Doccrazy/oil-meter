@@ -1,11 +1,11 @@
 // Battery powered oil level monitor
 // DFRobot FireBeetle 2 ESP32-C5 + JSN-SR04T ultrasonic sensor (on the switched 3V3_C output)
 //
-// Every wakeup: measure battery -> measure distance -> WiFi -> MQTT -> deep sleep.
+// Every wakeup: measure battery -> measure distance -> report -> deep sleep.
+// Reports go via WiFi/MQTT or Zigbee, depending on the build environment (transport.h).
 // The radio is only switched on after the measurement, and stays on for ~1-2 s.
 
 #include <Arduino.h>
-#include <WiFi.h>
 #include <esp_sleep.h>
 
 #include <algorithm>
@@ -14,8 +14,7 @@
 #include "battery_monitor.h"
 #include "config.h"
 #include "log.h"
-#include "mqtt_reporter.h"
-#include "network.h"
+#include "transport.h"
 #include "sensor.h"
 #include "tank_geometry.h"
 
@@ -48,7 +47,7 @@ uint32_t retryIntervalS(uint32_t failures, uint32_t regularS) {
 }  // namespace
 
 void setup() {
-    setCpuFrequencyMhz(80);  // lowest clock that still supports WiFi
+    setCpuFrequencyMhz(80);  // lowest clock that still supports the radio
     sensor::powerOff();
 
 #if OILMETER_DEBUG
@@ -65,7 +64,7 @@ void setup() {
     LOGF("\n=== Oil meter wakeup #%lu (%s) ===\n", static_cast<unsigned long>(rtcWakeups),
          timerWakeup ? "timer" : "reset");
 
-    mqtt::Report report{};
+    transport::Report report{};
 
     // Battery first, while nothing else draws current.
     if (cfg::BATTERY_SENSE_ENABLED) {
@@ -77,7 +76,7 @@ void setup() {
     }
 
     if (report.batteryOk && report.batteryVolts < cfg::BATTERY_CRITICAL_V) {
-        LOGF("Battery critical, skipping measurement and WiFi\n");
+        LOGF("Battery critical, skipping measurement and radio\n");
         deepSleep(cfg::LOW_BATTERY_SLEEP_INTERVAL_S);
     }
     const bool lowBattery = report.batteryOk && report.batteryVolts < cfg::BATTERY_LOW_V;
@@ -99,14 +98,7 @@ void setup() {
     const bool sendDiscovery = cfg::HA_DISCOVERY_ENABLED &&
                                (!timerWakeup || rtcWakeupsSinceDiscovery >= cfg::HA_DISCOVERY_EVERY_N_WAKEUPS);
 
-    bool sent = false;
-    if (net::connectWifi()) {
-        report.rssi = WiFi.RSSI();
-        sent = mqtt::publish(report, sendDiscovery);
-    }
-    net::shutdown();
-
-    if (sent) {
+    if (transport::send(report, timerWakeup, sendDiscovery)) {
         rtcFailures = 0;
         rtcWakeupsSinceDiscovery = sendDiscovery ? 0 : rtcWakeupsSinceDiscovery + 1;
         deepSleep(regularIntervalS);

@@ -2,7 +2,8 @@
 
 // =====================================================================================
 //  Oil level monitor – user configuration
-//  WiFi / MQTT credentials live in secrets.h (copy secrets.example.h).
+//  WiFi / MQTT credentials live in secrets.h (copy secrets.example.h), not needed
+//  for the Zigbee build.
 // =====================================================================================
 
 #include <stdint.h>
@@ -139,11 +140,35 @@ constexpr uint8_t STATIC_SUBNET[4] = {255, 255, 255, 0};
 constexpr uint8_t STATIC_DNS[4] = {192, 168, 1, 1};
 
 // -------------------------------------------------------------------------------------
+//  Zigbee  (only used by the firebeetle2_c5_zigbee* build environments)
+// -------------------------------------------------------------------------------------
+// The board joins an existing Zigbee network (Zigbee2MQTT, ZHA, deCONZ, ...) as a
+// battery powered end device. Manufacturer / model as shown by the coordinator; the
+// Zigbee2MQTT converter in zigbee2mqtt/ matches on ZIGBEE_MODEL.
+constexpr const char* ZIGBEE_MANUFACTURER = "DIY";
+constexpr const char* ZIGBEE_MODEL = "OilMeter";
+// Rejoin + report on a timer wakeup, before giving up (-> retry with backoff).
+constexpr uint32_t ZIGBEE_CONNECT_TIMEOUT_MS = 10000;
+// After a reset / power on: how long to wait for joining. Enable "permit join" on the
+// coordinator, then press RST.
+constexpr uint32_t ZIGBEE_PAIRING_TIMEOUT_MS = 180000;
+// After a reset: stay awake this long once joined, so the coordinator can interview
+// the device (read its endpoints and clusters).
+constexpr uint32_t ZIGBEE_INTERVIEW_TIME_MS = 30000;
+// Wait this long for the coordinator to acknowledge all reports.
+constexpr uint32_t ZIGBEE_REPORT_TIMEOUT_MS = 5000;
+// After a reset the LED is lit this long. Pressing BOOT meanwhile forgets the current
+// network and joins a new one (e.g. a different coordinator).
+constexpr uint32_t ZIGBEE_LEAVE_WINDOW_MS = 3000;
+
+// -------------------------------------------------------------------------------------
 //  Pins (DFRobot FireBeetle 2 ESP32-C5)
 // -------------------------------------------------------------------------------------
 constexpr int PIN_BATTERY_ADC = 1;    // IO1, on-board battery divider
 constexpr int PIN_SENSOR_POWER = 0;   // IO0, enables the switched 3V3_C output, HIGH = on
 constexpr int PIN_SENSOR_TRIG = 8;    // 8/D2
 constexpr int PIN_SENSOR_ECHO = 26;   // 26/D3
+constexpr int PIN_BOOT_BUTTON = 28;   // on-board BOOT button, LOW = pressed
+constexpr int PIN_LED = 15;           // on-board LED, HIGH = on
 
 }  // namespace cfg

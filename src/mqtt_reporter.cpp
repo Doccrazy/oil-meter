@@ -103,7 +103,7 @@ bool publishText(PubSubClient& client, const char* key, const char* value) {
 
 }  // namespace
 
-bool publish(const Report& r, bool sendDiscovery) {
+bool publish(const transport::Report& r, bool sendDiscovery) {
     WiFiClient net;
     PubSubClient client(net);
     client.setServer(MQTT_HOST, MQTT_PORT);
