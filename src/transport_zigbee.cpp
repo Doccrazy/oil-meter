@@ -26,6 +26,9 @@
 #include <Zigbee.h>
 #include <zcl/esp_zigbee_zcl_power_config.h>
 
+#include <string.h>
+
+#include <algorithm>
 #include <atomic>
 
 #include "config.h"
@@ -86,30 +89,59 @@ public:
     }
 };
 
-class AnalogSensor : public Endpoint<ZigbeeAnalog> {
+// Analog Input endpoint with description, resolution and EngineeringUnits, but
+// deliberately WITHOUT the ApplicationType attribute: ZigbeeAnalog always adds it
+// (default 0 = "temperature in °C"), and ZHA takes the unit and device class from
+// ApplicationType when present, which turned every value into a temperature. There
+// is no application type for volume or length, so the unit has to come from
+// EngineeringUnits.
+class AnalogSensor : public Endpoint<ZigbeeEP> {
 public:
     AnalogSensor(uint8_t endpoint, const char* description, uint16_t unit, float resolution)
-        : Endpoint(endpoint), description_(description), unit_(unit), resolution_(resolution) {}
+        : Endpoint(endpoint), description_(description), unit_(unit), resolution_(resolution) {
+        _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
+        _cluster_list = esp_zb_zcl_cluster_list_create();
+        esp_zb_cluster_list_add_basic_cluster(_cluster_list, esp_zb_basic_cluster_create(nullptr),
+                                              ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+        esp_zb_cluster_list_add_identify_cluster(_cluster_list, esp_zb_identify_cluster_create(nullptr),
+                                                 ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+        _ep_config = {.endpoint = _endpoint,
+                      .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID,
+                      .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID,
+                      .app_device_version = 0};
+    }
 
     // Create the clusters, before Zigbee.addEndpoint().
     void setup() {
         setManufacturerAndModel(cfg::ZIGBEE_MANUFACTURER, cfg::ZIGBEE_MODEL);
-        addAnalogInput();
-        setAnalogInputDescription(description_);
-        setAnalogInputResolution(resolution_);
-        esp_zb_attribute_list_t* cluster = esp_zb_cluster_list_get_cluster(
-            _cluster_list, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+
+        // ZCL string: length byte + characters
+        char zclDescription[ZB_MAX_NAME_LENGTH + 2] = {};
+        const size_t len = std::min(strlen(description_), ZB_MAX_NAME_LENGTH);
+        zclDescription[0] = static_cast<char>(len);
+        memcpy(zclDescription + 1, description_, len);
+        float resolution = resolution_;
         uint16_t unit = unit_;
-        if (cluster == nullptr ||
-            esp_zb_analog_input_cluster_add_attr(cluster, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_ENGINEERING_UNITS_ID, &unit) !=
-                ESP_OK) {
-            LOGF("Zigbee: cannot set unit of EP %u\n", getEndpoint());
-        }
+
+        esp_zb_attribute_list_t* cluster = esp_zb_analog_input_cluster_create(nullptr);
+        bool ok =
+            esp_zb_analog_input_cluster_add_attr(cluster, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_DESCRIPTION_ID,
+                                                 zclDescription) == ESP_OK &&
+            esp_zb_analog_input_cluster_add_attr(cluster, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_RESOLUTION_ID, &resolution) ==
+                ESP_OK &&
+            esp_zb_analog_input_cluster_add_attr(cluster, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_ENGINEERING_UNITS_ID, &unit) ==
+                ESP_OK;
+        ok = ok && esp_zb_cluster_list_add_analog_input_cluster(_cluster_list, cluster,
+                                                                ESP_ZB_ZCL_CLUSTER_SERVER_ROLE) == ESP_OK;
+        if (!ok) LOGF("Zigbee: cannot create Analog Input cluster on EP %u\n", getEndpoint());
     }
 
     bool report(float value) {
-        return setAnalogInput(value) &&
-               reportToCoordinator(ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID);
+        if (setClusterAttribute(ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+                                ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID, &value) != ESP_ZB_ZCL_STATUS_SUCCESS) {
+            return false;
+        }
+        return reportToCoordinator(ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID);
     }
 
 private:

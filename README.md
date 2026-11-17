@@ -110,7 +110,10 @@ Input clusters (with description and unit), plus the standard battery cluster:
   `<z2m data>/external_converters/` and restart Zigbee2MQTT. The device then shows
   up with named values (`volume`, `fill`, `free`, …) and in Home Assistant via the
   Zigbee2MQTT discovery.
-* **ZHA / others:** the analog inputs appear as generic sensors; rename them as needed.
+* **ZHA:** the values appear as sensors named after their description (*Oil volume*,
+  *Fill level*, …) with their units (L, %, cm, V), taken from the EngineeringUnits
+  attribute. The firmware deliberately leaves out the ApplicationType attribute, since
+  ZHA would take the unit from that instead and there is no type for volume or length.
 
 Reports are sent directly to the coordinator (no binding needed) and count as
 delivered once acknowledged. Failed reports retry with the same backoff as WiFi.
